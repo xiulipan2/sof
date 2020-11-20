@@ -330,6 +330,9 @@ static int tdfb_cmd_get_data(struct comp_dev *dev,
 		comp_info(dev, "tdfb_cmd_get_data(), SOF_CTRL_CMD_BINARY");
 		ret = comp_data_blob_get_cmd(cd->model_handler, cdata, max_size);
 		break;
+	case SOF_CTRL_CMD_ENUM:
+		comp_info(dev, "tdfb_cmd_get_data(), SOF_CTRL_CMD_ENUM");
+		break;
 	default:
 		comp_err(dev, "tdfb_cmd_get_data() error: invalid cdata->cmd");
 		ret = -EINVAL;
@@ -342,12 +345,21 @@ static int tdfb_cmd_set_data(struct comp_dev *dev,
 			     struct sof_ipc_ctrl_data *cdata)
 {
 	struct tdfb_comp_data *cd = comp_get_drvdata(dev);
+	int j;
 	int ret = 0;
 
 	switch (cdata->cmd) {
 	case SOF_CTRL_CMD_BINARY:
 		comp_info(dev, "tdfb_cmd_set_data(), SOF_CTRL_CMD_BINARY");
 		ret = comp_data_blob_set_cmd(cd->model_handler, cdata);
+		break;
+	case SOF_CTRL_CMD_ENUM:
+		comp_info(dev, "tdfb_cmd_set_data(), SOF_CTRL_CMD_ENUM %d %d %d",
+			  cdata->index, cdata->msg_index, cdata->num_elems);
+		for (j = 0; j < cdata->num_elems; j++)
+			comp_info(dev, "tdfb_cmd_set_data(), channel = %d, value = %u",
+				  cdata->chanv[j].channel, cdata->chanv[j].value);
+
 		break;
 	default:
 		comp_err(dev, "tdfb_cmd_set_data() error: invalid cdata->cmd");
@@ -369,9 +381,19 @@ static int tdfb_cmd(struct comp_dev *dev, int cmd, void *data,
 
 	switch (cmd) {
 	case COMP_CMD_SET_DATA:
+		comp_info(dev, "tdfb_cmd(): COMP_CMD_SET_DATA");
 		ret = tdfb_cmd_set_data(dev, cdata);
 		break;
 	case COMP_CMD_GET_DATA:
+		comp_info(dev, "tdfb_cmd(): COMP_CMD_GET_DATA");
+		ret = tdfb_cmd_get_data(dev, cdata, max_data_size);
+		break;
+	case COMP_CMD_SET_VALUE:
+		comp_info(dev, "tdfb_cmd(): COMP_CMD_SET_VALUE");
+		ret = tdfb_cmd_set_data(dev, cdata);
+		break;
+	case COMP_CMD_GET_VALUE:
+		comp_info(dev, "tdfb_cmd(): COMP_CMD_GET_VALUE");
 		ret = tdfb_cmd_get_data(dev, cdata, max_data_size);
 		break;
 	default:
